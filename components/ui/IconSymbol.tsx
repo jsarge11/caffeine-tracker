@@ -1,43 +1,68 @@
-// This file is a fallback for using MaterialIcons on Android and web.
+import React from "react";
+import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { SymbolWeight } from 'expo-symbols';
-import React from 'react';
-import { OpaqueColorValue, StyleProp, ViewStyle } from 'react-native';
+export type IconSymbolName =
+  | "house.fill"
+  | "paperplane.fill"
+  | "chart.bar.fill"
+  | "chevron.left.forwardslash.chevron.right"
+  | "chart.xyaxis.line";
 
-// Add your SFSymbol to MaterialIcons mappings here.
-const MAPPING = {
-  // See MaterialIcons here: https://icons.expo.fyi
-  // See SF Symbols in the SF Symbols app on Mac.
-  'house.fill': 'home',
-  'paperplane.fill': 'send',
-  'chevron.left.forwardslash.chevron.right': 'code',
-  'chevron.right': 'chevron-right',
-} as Partial<
-  Record<
-    import('expo-symbols').SymbolViewProps['name'],
-    React.ComponentProps<typeof MaterialIcons>['name']
-  >
->;
+// Add types for the Font Awesome and Material Icons
+type FontAwesomeIconName = keyof typeof FontAwesome.glyphMap;
+type MaterialIconsName = keyof typeof MaterialIcons.glyphMap;
 
-export type IconSymbolName = keyof typeof MAPPING;
+export interface IconSymbolProps {
+  name: IconSymbolName;
+  size?: number;
+  color?: string;
+  style?: any;
+}
 
-/**
- * An icon component that uses native SFSymbols on iOS, and MaterialIcons on Android and web. This ensures a consistent look across platforms, and optimal resource usage.
- *
- * Icon `name`s are based on SFSymbols and require manual mapping to MaterialIcons.
- */
 export function IconSymbol({
   name,
   size = 24,
-  color,
+  color = "black",
   style,
-}: {
-  name: IconSymbolName;
-  size?: number;
-  color: string | OpaqueColorValue;
-  style?: StyleProp<ViewStyle>;
-  weight?: SymbolWeight;
-}) {
-  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
+}: IconSymbolProps) {
+  // Map platform-independent icon names to FontAwesome or Material icon names
+  const getIconName = (): FontAwesomeIconName | MaterialIconsName => {
+    switch (name) {
+      case "house.fill":
+        return "home" as FontAwesomeIconName;
+      case "paperplane.fill":
+        return "send" as FontAwesomeIconName;
+      case "chart.bar.fill":
+        return "bar-chart" as FontAwesomeIconName;
+      case "chevron.left.forwardslash.chevron.right":
+        return "code" as FontAwesomeIconName;
+      case "chart.xyaxis.line":
+        return "timeline" as MaterialIconsName;
+      default:
+        return "circle" as MaterialIconsName;
+    }
+  };
+
+  const iconName = getIconName();
+
+  // Choose the appropriate icon set based on the icon name
+  if (["home", "send", "bar-chart", "code"].includes(iconName as string)) {
+    return (
+      <FontAwesome
+        name={iconName as FontAwesomeIconName}
+        size={size}
+        color={color}
+        style={style}
+      />
+    );
+  } else {
+    return (
+      <MaterialIcons
+        name={iconName as MaterialIconsName}
+        size={size}
+        color={color}
+        style={style}
+      />
+    );
+  }
 }

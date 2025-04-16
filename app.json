@@ -1,21 +1,30 @@
 {
   "expo": {
-    "name": "CaffeineTracker",
-    "slug": "CaffeineTracker",
+    "name": "Caffeine Tracker",
+    "slug": "caffeine-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "caffeinetracker",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jsargent.caffeinetracker",
+      "buildNumber": "1",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "fetch",
+          "remote-notification"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+        "backgroundColor": "#008080"
+      },
+      "package": "com.jsargent.caffeinetracker"
     },
     "web": {
       "bundler": "metro",
@@ -23,17 +32,18 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
       [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#008080"
         }
       ]
     ],
+    "primaryColor": "#008080",
+    "description": "Track your caffeine intake and sleep patterns",
     "experiments": {
       "typedRoutes": true
     }

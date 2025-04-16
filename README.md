@@ -1,8 +1,16 @@
-# Welcome to your Expo app 👋
+# Caffeine Tracker App 
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A simple iOS app to track your caffeine intake and sleep patterns as you wean off caffeine.
 
-## Get started
+## Features
+
+- **Simple Caffeine Tracking**: Log caffeine intake in mg with preset options or custom values
+- **Sleep Tracking**: Record sleep times and quality ratings
+- **Nap Tracking**: Separately track naps with duration and quality
+- **Daily Summary**: View your daily caffeine consumption and sleep data at a glance
+- **Local Storage**: All data is stored locally on your device for privacy
+
+## Getting Started
 
 1. Install dependencies
 
@@ -13,38 +21,47 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 2. Start the app
 
    ```bash
-    npx expo start
+   npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+3. Run on iOS simulator
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   ```bash
+   npm run ios
+   ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Project Structure
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+CaffeineTracker/
+├── src/
+│   ├── components/          # Reusable UI components
+│   ├── screens/             # Main app screens
+│   ├── storage/             # Local storage functions
+│   ├── utils/               # Helper functions
+│   └── theme.js             # Teal/blue theme configuration
+├── App.js                   # Main app component with navigation
+└── app.json                 # App configuration
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Core Functionality
 
-## Learn more
+- **Home Screen**: View today's tracked items and access tracking functions
+- **Add Caffeine**: Record caffeine intake with amount and time
+- **Add Sleep**: Track sleep with start/end times and quality rating
+- **Add Nap**: Similar to sleep tracking but categorized as naps
 
-To learn more about developing your project with Expo, look at the following resources:
+## Tech Stack
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- **React Native**: UI framework
+- **Expo**: Development platform
+- **AsyncStorage**: Local data persistence
+- **React Navigation**: Screen navigation
+- **Expo Notifications**: Reminders
 
-## Join the community
+## Future Enhancements
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Analytics dashboard for correlating caffeine and sleep
+- Data export functionality
+- Cloud backup options
+- More detailed reporting
