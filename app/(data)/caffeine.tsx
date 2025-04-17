@@ -1,15 +1,10 @@
-import React from 'react';
-import { SafeAreaView, StyleSheet, View } from 'react-native';
-import { Stack } from 'expo-router';
-import CaffeineInput from '../../src/components/CaffeineInput';
-import { saveCaffeineData } from '../../src/storage/asyncStorage';
-import { useRouter } from 'expo-router';
-
-// Define interface for caffeine data
-interface CaffeineData {
-  amount: number;
-  timestamp: number;
-}
+import React from "react";
+import { SafeAreaView, StyleSheet, View } from "react-native";
+import { Stack } from "expo-router";
+import CaffeineInput from "../../src/components/CaffeineInput";
+import { saveCaffeineData } from "../../src/storage/asyncStorage";
+import { useRouter } from "expo-router";
+import { CaffeineData } from "../../src/types/data.types";
 
 export default function AddCaffeineScreen() {
   const router = useRouter();
@@ -19,20 +14,22 @@ export default function AddCaffeineScreen() {
       await saveCaffeineData(caffeineData);
       router.back();
     } catch (error) {
-      console.error('Error saving caffeine data:', error);
+      console.error("Error saving caffeine data:", error);
       // Could add error handling UI here
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ 
-        title: "Add Caffeine",
-        headerStyle: {
-          backgroundColor: '#008080',
-        },
-        headerTintColor: '#fff',
-      }} />
+      <Stack.Screen
+        options={{
+          title: "Add Caffeine",
+          headerStyle: {
+            backgroundColor: "#008080",
+          },
+          headerTintColor: "#fff",
+        }}
+      />
       <View style={styles.content}>
         <CaffeineInput onSave={handleSave} />
       </View>
@@ -43,7 +40,7 @@ export default function AddCaffeineScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: "#f9f9f9",
   },
   content: {
     flex: 1,

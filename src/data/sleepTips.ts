@@ -3,7 +3,7 @@
  * These tips will be randomly shown to users in the dashboard
  */
 
-export const sleepTips = [
+export const sleepTips: string[] = [
   "Maintain a consistent sleep schedule, even on weekends",
   "Aim for 7-9 hours of sleep per night",
   "Create a relaxing bedtime routine to wind down",

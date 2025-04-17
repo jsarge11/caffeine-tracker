@@ -1,12 +1,12 @@
 // Process data utilities for the Caffeine Tracker app
-import { formatTime, formatDuration } from '../utils/dateTime';
+import { CaffeineData, TimeData } from "../types/data.types";
 
 // Maximum values for scaling in dashboard
-export const MAX_VALUES = {
+export const MAX_VALUES: { [key: string]: number } = {
   CAFFEINE: 300, // In mg
-  SLEEP: 10,     // In hours
-  NAPS: 3,       // Count
-  SLEEP_QUALITY: 10 // Rating 1-10
+  SLEEP: 10, // In hours
+  NAPS: 3, // Count
+  SLEEP_QUALITY: 10, // Rating 1-10
 };
 
 // Import the correct functions from asyncStorage.js
@@ -17,20 +17,23 @@ import {
   deleteCaffeineEntry,
   deleteSleepEntry,
 } from "./asyncStorage";
+import { DayData } from "../types/data.types";
 
 // Process data for dashboard
-export const processDataForDashboard = async (daysToShow) => {
+export const processDataForDashboard = async (
+  daysToShow: number
+): Promise<DayData[]> => {
   try {
     // Fetch caffeine, sleep and nap data using the correct function names
-    const caffeineData = (await getAllCaffeineData()) || [];
-    const sleepData = (await getAllSleepData()) || [];
-    const napData = (await getAllNapData()) || []; // Get nap data from NAP_DATA storage key
+    const caffeineData: CaffeineData[] = (await getAllCaffeineData()) || [];
+    const sleepData: TimeData[] = (await getAllSleepData()) || [];
+    const napData: TimeData[] = (await getAllNapData()) || []; // Get nap data from NAP_DATA storage key
 
     console.log("Total sleep entries found:", sleepData.length);
     console.log("Total nap entries found:", napData.length);
 
     // Get dates for the past N days
-    const daysArray = [];
+    const daysArray: DayData[] = [];
     const today = new Date();
 
     for (let i = daysToShow - 1; i >= 0; i--) {
@@ -50,7 +53,6 @@ export const processDataForDashboard = async (daysToShow) => {
         caffeine: 0,
         sleepHours: 0,
         naps: 0,
-        sleepQuality: 0,
       });
     }
 
@@ -83,12 +85,12 @@ export const processDataForDashboard = async (daysToShow) => {
             : 0;
 
         dayData.sleepHours = hoursSlept;
-        // Ensure sleep quality is a number between 1-10 and always set
-        dayData.sleepQuality = Number(entry.rating) || 0;
 
         // Log to help debug
         console.log(
-          `Processing sleep data for ${dateString}: Quality = ${dayData.sleepQuality}, Hours = ${hoursSlept.toFixed(1)}`
+          `Processing sleep data for ${dateString}: Hours = ${hoursSlept.toFixed(
+            1
+          )}`
         );
       }
     });
@@ -116,10 +118,13 @@ export const processDataForDashboard = async (daysToShow) => {
 };
 
 // Delete entries
-export const deleteCaffeineEntryById = async (id) => {
+export const deleteCaffeineEntryById = async (id: string): Promise<boolean> => {
   return await deleteCaffeineEntry(id);
 };
 
-export const deleteSleepEntryById = async (id, isNap) => {
+export const deleteSleepEntryById = async (
+  id: string,
+  isNap: boolean = false
+): Promise<boolean> => {
   return await deleteSleepEntry(id, isNap);
 };

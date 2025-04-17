@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { StatusBar } from "react-native";
+import { StatusBar, Platform } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { colors } from "./src/theme";
@@ -23,7 +23,40 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export default function App() {
+// Type for the async function
+async function registerForPushNotificationsAsync(): Promise<void> {
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+
+  if (existingStatus !== "granted") {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+
+  if (finalStatus !== "granted") {
+    console.log("Failed to get push token for notifications!");
+    return;
+  }
+
+  // We could store the token if needed for server-side notifications
+  // const token = (await Notifications.getExpoPushTokenAsync()).data;
+
+  // Configure for iOS
+  if (Platform.OS === "ios") {
+    Notifications.setNotificationCategoryAsync("default", []);
+  } 
+  // Configure for Android
+  else if (Platform.OS === "android") {
+    Notifications.setNotificationChannelAsync("default", {
+      name: "default",
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: "#FF231F7C",
+    });
+  }
+}
+
+export default function App(): JSX.Element {
   useEffect(() => {
     // Request permission for notifications
     registerForPushNotificationsAsync();
@@ -43,7 +76,7 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <Stack.Navigator
         initialRouteName="Home"
         screenOptions={{
@@ -59,7 +92,7 @@ export default function App() {
         <Stack.Screen
           name="Home"
           component={HomeScreen}
-          options={{ headerShown: false }}
+          options={{ title: "Caffeine Tracker" }}
         />
         <Stack.Screen
           name="AddCaffeine"
@@ -81,37 +114,8 @@ export default function App() {
   );
 }
 
-// Function to request notification permissions
-async function registerForPushNotificationsAsync() {
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-
-  if (existingStatus !== "granted") {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
-  if (finalStatus !== "granted") {
-    console.log("Failed to get push token for notifications!");
-    return;
-  }
-
-  // We could store the token if needed for server-side notifications
-  // const token = (await Notifications.getExpoPushTokenAsync()).data;
-
-  // Configure for iOS
-  if (Platform.OS === "ios") {
-    Notifications.setNotificationCategoryAsync({
-      name: "default",
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#FF231F7C",
-    });
-  }
-}
-
 // Schedule a notification reminder (can be called from any screen)
-export async function scheduleNotification(title, body, trigger) {
+export async function scheduleNotification(title: string, body: string, trigger: any): Promise<void> {
   await Notifications.scheduleNotificationAsync({
     content: {
       title: title,

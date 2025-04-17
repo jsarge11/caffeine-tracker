@@ -7,20 +7,27 @@ import {
   ScrollView,
 } from "react-native";
 import { Button } from "react-native-elements";
-import { colors, spacing, buttonStyles } from "../theme";
-import RatingSelector from "./RatingSelector";
+import { colors, spacing } from "../theme";
+import { TimeData } from "../types/data.types";
 
-const SleepInput = ({ onSave, isNap = false, initialData = null }) => {
-  const [startHour, setStartHour] = useState(null);
-  const [startMinute, setStartMinute] = useState(null);
-  const [startAmPm, setStartAmPm] = useState("PM");
+interface SleepInputProps {
+  onSave: (data: TimeData) => void;
+  isNap?: boolean;
+  initialData?: TimeData | null;
+}
 
-  const [endHour, setEndHour] = useState(null);
-  const [endMinute, setEndMinute] = useState(null);
-  const [endAmPm, setEndAmPm] = useState("AM");
+const SleepInput: React.FC<SleepInputProps> = ({
+  onSave,
+  isNap = false,
+  initialData = null,
+}) => {
+  const [startHour, setStartHour] = useState<number | null>(null);
+  const [startMinute, setStartMinute] = useState<number | null>(null);
+  const [startAmPm, setStartAmPm] = useState<"AM" | "PM">("PM");
 
-  // Initialize rating to 5 for naps or null for sleep
-  const [rating, setRating] = useState(isNap ? 5 : null);
+  const [endHour, setEndHour] = useState<number | null>(null);
+  const [endMinute, setEndMinute] = useState<number | null>(null);
+  const [endAmPm, setEndAmPm] = useState<"AM" | "PM">("AM");
 
   const hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
   const minutes = [0, 15, 30, 45];
@@ -73,20 +80,11 @@ const SleepInput = ({ onSave, isNap = false, initialData = null }) => {
           : 0
       );
       setEndAmPm(isEndPM ? "PM" : "AM");
-
-      // Set rating
-      setRating(initialData.rating);
     }
   }, [initialData, isNap]);
 
-  const handleSave = () => {
-    if (
-      !startHour ||
-      !startMinute ||
-      !endHour ||
-      !endMinute ||
-      (!isNap && !rating)
-    ) {
+  const handleSave = (): void => {
+    if (!startHour || !startMinute || !endHour || !endMinute) {
       return; // Don't save incomplete data
     }
 
@@ -98,7 +96,7 @@ const SleepInput = ({ onSave, isNap = false, initialData = null }) => {
     const now = new Date();
 
     const startDate =
-      initialData && initialData.startTime
+      initialData && "startTime" in initialData && initialData.startTime
         ? new Date(initialData.startTime)
         : new Date();
 
@@ -106,7 +104,7 @@ const SleepInput = ({ onSave, isNap = false, initialData = null }) => {
     startDate.setHours(startHour24, startMinute, 0, 0);
 
     const endDate =
-      initialData && initialData.endTime
+      initialData && "endTime" in initialData && initialData.endTime
         ? new Date(initialData.endTime)
         : new Date();
 
@@ -118,53 +116,87 @@ const SleepInput = ({ onSave, isNap = false, initialData = null }) => {
       // Calculate what the duration would be if we add a day
       const nextDayEndDate = new Date(endDate);
       nextDayEndDate.setDate(nextDayEndDate.getDate() + 1);
-      
+
       // Calculate durations
-      const sameDayDuration = (24 * 60 * 60 * 1000) - (startDate.getTime() - endDate.getTime());
+      const sameDayDuration =
+        24 * 60 * 60 * 1000 - (startDate.getTime() - endDate.getTime());
       const nextDayDuration = nextDayEndDate.getTime() - startDate.getTime();
-      
+
       // If adding a day would make the duration unreasonably long (>16 hours),
       // and we're dealing with AM to AM times, use the same day calculation
-      if (nextDayDuration > (16 * 60 * 60 * 1000) && 
-          startAmPm === "AM" && endAmPm === "AM") {
+      if (
+        nextDayDuration > 16 * 60 * 60 * 1000 &&
+        startAmPm === "AM" &&
+        endAmPm === "AM"
+      ) {
         // Keep same day - don't modify endDate
-      } else if (sameDayDuration <= (24 * 60 * 60 * 1000)) {
+      } else if (sameDayDuration <= 24 * 60 * 60 * 1000) {
         // For other cases, add a day only if the resulting duration is reasonable
         endDate.setDate(endDate.getDate() + 1);
       }
     }
-    
-    // Double-check that the duration is not more than 24 hours
-    const duration = endDate.getTime() - startDate.getTime();
-    if (duration > 24 * 60 * 60 * 1000) {
-      // If somehow we still have more than 24 hours, adjust end date
-      endDate = new Date(startDate.getTime() + (16 * 60 * 60 * 1000)); // Cap at 16 hours
-    }
 
-    const sleepData = {
+    // Calculate duration in milliseconds
+    const durationMs = endDate.getTime() - startDate.getTime();
+
+    // Convert to hours for sleep or minutes for nap
+    const duration = isNap
+      ? Math.round(durationMs / (60 * 1000)) // Minutes for nap
+      : Math.round((durationMs / (60 * 60 * 1000)) * 10) / 10; // Hours for sleep with one decimal
+
+    // Create the data object
+    const timeData: TimeData = {
+      id: initialData?.id || Date.now().toString(),
+      isNap,
       startTime: startDate.getTime(),
       endTime: endDate.getTime(),
-      rating: isNap ? 5 : rating, // Default rating of 5 for naps
-      isNap,
+      duration: duration,
     };
 
-    // If editing, include the id
+    // If editing, pass the id along
     if (initialData && initialData.id) {
-      sleepData.id = initialData.id;
+      timeData.id = initialData.id;
     }
 
-    onSave(sleepData);
+    onSave(timeData);
   };
 
-  const title = isNap
-    ? initialData
-      ? "Edit Nap"
-      : "Add Nap"
-    : initialData
-    ? "Edit Sleep"
-    : "Add Sleep";
+  // Calculate and format the duration
+  const calculateDuration = (): string => {
+    if (!startHour || !startMinute || !endHour || !endMinute) {
+      return "Select times";
+    }
 
-  const buttonStyle = isNap ? buttonStyles.nap : buttonStyles.sleep;
+    // Convert to 24-hour format
+    const startHour24 = (startHour % 12) + (startAmPm === "PM" ? 12 : 0);
+    const endHour24 = (endHour % 12) + (endAmPm === "PM" ? 12 : 0);
+
+    // Create date objects for calculation
+    const startDate = new Date();
+    startDate.setHours(startHour24, startMinute, 0, 0);
+
+    const endDate = new Date();
+    endDate.setHours(endHour24, endMinute, 0, 0);
+
+    // If end time is before start time, assume it's the next day
+    if (endDate < startDate) {
+      endDate.setDate(endDate.getDate() + 1);
+    }
+
+    // Calculate duration in milliseconds
+    const durationMs = endDate.getTime() - startDate.getTime();
+
+    if (isNap) {
+      // For naps, show minutes
+      const minutes = Math.round(durationMs / (60 * 1000));
+      return `${minutes} minutes`;
+    } else {
+      // For sleep, show hours and minutes
+      const hours = Math.floor(durationMs / (60 * 60 * 1000));
+      const minutes = Math.round((durationMs % (60 * 60 * 1000)) / (60 * 1000));
+      return `${hours}h ${minutes}m`;
+    }
+  };
 
   return (
     <ScrollView
@@ -175,22 +207,34 @@ const SleepInput = ({ onSave, isNap = false, initialData = null }) => {
         <Text
           style={[styles.title, isNap ? styles.napTitle : styles.sleepTitle]}
         >
-          {title}
+          {initialData
+            ? isNap
+              ? "Edit Nap"
+              : "Edit Sleep"
+            : isNap
+            ? "Add Nap"
+            : "Add Sleep"}
         </Text>
 
-        {/* Start Time */}
+        {/* Start Time Section */}
         <Text style={styles.sectionLabel}>Start Time</Text>
         <View style={styles.timeSection}>
+          {/* Hours Column */}
           <View style={styles.timeColumn}>
             <Text style={styles.timeLabel}>Hour</Text>
-            <ScrollView style={styles.pickerContainer}>
+            <ScrollView
+              style={styles.pickerContainer}
+              showsVerticalScrollIndicator={false}
+            >
               {hours.map((hour) => (
                 <TouchableOpacity
                   key={`start-hour-${hour}`}
                   style={[
                     styles.pickerItem,
-                    startHour === hour && styles.selectedPickerItem,
-                    isNap && startHour === hour && styles.selectedNapPickerItem,
+                    startHour === hour &&
+                      (isNap
+                        ? styles.selectedNapPickerItem
+                        : styles.selectedPickerItem),
                   ]}
                   onPress={() => setStartHour(hour)}
                 >
@@ -207,18 +251,22 @@ const SleepInput = ({ onSave, isNap = false, initialData = null }) => {
             </ScrollView>
           </View>
 
+          {/* Minutes Column */}
           <View style={styles.timeColumn}>
             <Text style={styles.timeLabel}>Minute</Text>
-            <ScrollView style={styles.pickerContainer}>
+            <ScrollView
+              style={styles.pickerContainer}
+              showsVerticalScrollIndicator={false}
+            >
               {minutes.map((minute) => (
                 <TouchableOpacity
                   key={`start-minute-${minute}`}
                   style={[
                     styles.pickerItem,
-                    startMinute === minute && styles.selectedPickerItem,
-                    isNap &&
-                      startMinute === minute &&
-                      styles.selectedNapPickerItem,
+                    startMinute === minute &&
+                      (isNap
+                        ? styles.selectedNapPickerItem
+                        : styles.selectedPickerItem),
                   ]}
                   onPress={() => setStartMinute(minute)}
                 >
@@ -235,14 +283,15 @@ const SleepInput = ({ onSave, isNap = false, initialData = null }) => {
             </ScrollView>
           </View>
 
+          {/* AM/PM Column */}
           <View style={styles.timeColumn}>
             <Text style={styles.timeLabel}>AM/PM</Text>
             <View style={styles.amPmContainer}>
               <TouchableOpacity
                 style={[
                   styles.amPmButton,
-                  startAmPm === "AM" && styles.selectedAmPm,
-                  isNap && startAmPm === "AM" && styles.selectedNapAmPm,
+                  startAmPm === "AM" &&
+                    (isNap ? styles.selectedNapAmPm : styles.selectedAmPm),
                 ]}
                 onPress={() => setStartAmPm("AM")}
               >
@@ -258,8 +307,8 @@ const SleepInput = ({ onSave, isNap = false, initialData = null }) => {
               <TouchableOpacity
                 style={[
                   styles.amPmButton,
-                  startAmPm === "PM" && styles.selectedAmPm,
-                  isNap && startAmPm === "PM" && styles.selectedNapAmPm,
+                  startAmPm === "PM" &&
+                    (isNap ? styles.selectedNapAmPm : styles.selectedAmPm),
                 ]}
                 onPress={() => setStartAmPm("PM")}
               >
@@ -276,19 +325,25 @@ const SleepInput = ({ onSave, isNap = false, initialData = null }) => {
           </View>
         </View>
 
-        {/* End Time */}
+        {/* End Time Section */}
         <Text style={styles.sectionLabel}>End Time</Text>
         <View style={styles.timeSection}>
+          {/* Hours Column */}
           <View style={styles.timeColumn}>
             <Text style={styles.timeLabel}>Hour</Text>
-            <ScrollView style={styles.pickerContainer}>
+            <ScrollView
+              style={styles.pickerContainer}
+              showsVerticalScrollIndicator={false}
+            >
               {hours.map((hour) => (
                 <TouchableOpacity
                   key={`end-hour-${hour}`}
                   style={[
                     styles.pickerItem,
-                    endHour === hour && styles.selectedPickerItem,
-                    isNap && endHour === hour && styles.selectedNapPickerItem,
+                    endHour === hour &&
+                      (isNap
+                        ? styles.selectedNapPickerItem
+                        : styles.selectedPickerItem),
                   ]}
                   onPress={() => setEndHour(hour)}
                 >
@@ -305,18 +360,22 @@ const SleepInput = ({ onSave, isNap = false, initialData = null }) => {
             </ScrollView>
           </View>
 
+          {/* Minutes Column */}
           <View style={styles.timeColumn}>
             <Text style={styles.timeLabel}>Minute</Text>
-            <ScrollView style={styles.pickerContainer}>
+            <ScrollView
+              style={styles.pickerContainer}
+              showsVerticalScrollIndicator={false}
+            >
               {minutes.map((minute) => (
                 <TouchableOpacity
                   key={`end-minute-${minute}`}
                   style={[
                     styles.pickerItem,
-                    endMinute === minute && styles.selectedPickerItem,
-                    isNap &&
-                      endMinute === minute &&
-                      styles.selectedNapPickerItem,
+                    endMinute === minute &&
+                      (isNap
+                        ? styles.selectedNapPickerItem
+                        : styles.selectedPickerItem),
                   ]}
                   onPress={() => setEndMinute(minute)}
                 >
@@ -333,14 +392,15 @@ const SleepInput = ({ onSave, isNap = false, initialData = null }) => {
             </ScrollView>
           </View>
 
+          {/* AM/PM Column */}
           <View style={styles.timeColumn}>
             <Text style={styles.timeLabel}>AM/PM</Text>
             <View style={styles.amPmContainer}>
               <TouchableOpacity
                 style={[
                   styles.amPmButton,
-                  endAmPm === "AM" && styles.selectedAmPm,
-                  isNap && endAmPm === "AM" && styles.selectedNapAmPm,
+                  endAmPm === "AM" &&
+                    (isNap ? styles.selectedNapAmPm : styles.selectedAmPm),
                 ]}
                 onPress={() => setEndAmPm("AM")}
               >
@@ -356,8 +416,8 @@ const SleepInput = ({ onSave, isNap = false, initialData = null }) => {
               <TouchableOpacity
                 style={[
                   styles.amPmButton,
-                  endAmPm === "PM" && styles.selectedAmPm,
-                  isNap && endAmPm === "PM" && styles.selectedNapAmPm,
+                  endAmPm === "PM" &&
+                    (isNap ? styles.selectedNapAmPm : styles.selectedAmPm),
                 ]}
                 onPress={() => setEndAmPm("PM")}
               >
@@ -374,10 +434,17 @@ const SleepInput = ({ onSave, isNap = false, initialData = null }) => {
           </View>
         </View>
 
-        {/* Quality Rating - Only show for sleep, not for naps */}
-        {!isNap && (
-          <RatingSelector selectedRating={rating} onSelectRating={setRating} />
-        )}
+        {/* Duration Preview */}
+        <View style={styles.timePreview}>
+          <Text
+            style={[
+              styles.timePreviewText,
+              isNap ? styles.napTimePreviewText : styles.sleepTimePreviewText,
+            ]}
+          >
+            Duration: {calculateDuration()}
+          </Text>
+        </View>
 
         {/* Save Button - Made more prominent */}
         <View style={styles.saveButtonContainer}>
@@ -391,22 +458,12 @@ const SleepInput = ({ onSave, isNap = false, initialData = null }) => {
                 ? "Save Nap"
                 : "Save Sleep"
             }
-            disabled={
-              !startHour ||
-              !startMinute ||
-              !endHour ||
-              !endMinute ||
-              (!isNap && !rating)
-            }
+            disabled={!startHour || !startMinute || !endHour || !endMinute}
             onPress={handleSave}
             buttonStyle={[
               styles.saveButton,
               isNap ? styles.napSaveButton : styles.sleepSaveButton,
-              (!startHour ||
-                !startMinute ||
-                !endHour ||
-                !endMinute ||
-                (!isNap && !rating)) &&
+              (!startHour || !startMinute || !endHour || !endMinute) &&
                 styles.disabledButton,
             ]}
             titleStyle={styles.saveButtonText}

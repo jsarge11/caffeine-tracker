@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
-  ScrollView,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, spacing, buttonStyles } from "../theme";
@@ -16,15 +15,28 @@ import {
   deleteSleepEntry,
 } from "../storage/asyncStorage";
 import { formatDateFull } from "../utils/dateTime";
+import { CaffeineData, TimeData } from "../types/data.types";
 
-const HomeScreen = ({ navigation }) => {
-  const [todayData, setTodayData] = useState({
+interface TodayData {
+  caffeine: CaffeineData[];
+  sleep: TimeData[];
+  nap: TimeData[];
+}
+
+interface HomeScreenProps {
+  navigation: {
+    navigate: (screen: string, params?: any) => void;
+  };
+}
+
+const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
+  const [todayData, setTodayData] = useState<TodayData>({
     caffeine: [],
     sleep: [],
     nap: [],
   });
-  const [totalCaffeine, setTotalCaffeine] = useState(0);
-  const [date, setDate] = useState(new Date());
+  const [totalCaffeine, setTotalCaffeine] = useState<number>(0);
+  const [date] = useState<Date>(new Date());
 
   // Load data when screen is focused
   useFocusEffect(
@@ -33,7 +45,7 @@ const HomeScreen = ({ navigation }) => {
     }, [date])
   );
 
-  const loadTodayData = async () => {
+  const loadTodayData = async (): Promise<void> => {
     try {
       const data = await getDataForDate(date);
       setTodayData(data);
@@ -46,14 +58,17 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  const handleDeleteCaffeine = async (id) => {
+  const handleDeleteCaffeine = async (id: string): Promise<void> => {
     const success = await deleteCaffeineEntry(id);
     if (success) {
       loadTodayData();
     }
   };
 
-  const handleDeleteSleep = async (id, isNap) => {
+  const handleDeleteSleep = async (
+    id: string,
+    isNap: boolean
+  ): Promise<void> => {
     const success = await deleteSleepEntry(id, isNap);
     if (success) {
       loadTodayData();
@@ -61,21 +76,17 @@ const HomeScreen = ({ navigation }) => {
   };
 
   // Handle edit functionality
-  const handleEditCaffeine = (id) => {
+  const handleEditCaffeine = (id: string): void => {
     navigation.navigate("EditCaffeine", { id });
   };
 
-  const handleEditSleep = (id) => {
+  const handleEditSleep = (id: string): void => {
     navigation.navigate("EditSleep", { id });
   };
 
-  const handleEditNap = (id) => {
+  const handleEditNap = (id: string): void => {
     navigation.navigate("EditNap", { id });
   };
-
-  const sleepEntriesWithoutNaps = todayData.sleep.filter(
-    (entry) => !entry.isNap
-  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -93,9 +104,7 @@ const HomeScreen = ({ navigation }) => {
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Sleep Entries</Text>
-            <Text style={styles.summaryValue}>
-              {sleepEntriesWithoutNaps.length}
-            </Text>
+            <Text style={styles.summaryValue}>{todayData.sleep.length}</Text>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Nap Entries</Text>

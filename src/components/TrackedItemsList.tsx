@@ -8,8 +8,37 @@ import {
 } from "react-native";
 import { colors, spacing } from "../theme";
 import { formatTime, formatDuration } from "../utils/dateTime";
+import { CaffeineData, TimeData } from "../types/data.types";
 
-const TrackedItemsList = ({
+interface TrackedItemsListProps {
+  caffeineData?: CaffeineData[];
+  sleepData?: TimeData[];
+  napData?: TimeData[];
+  onDeleteCaffeine?: (id: string) => void;
+  onDeleteSleep?: (id: string, isNap: boolean) => void;
+  onEditCaffeine?: (id: string) => void;
+  onEditSleep?: (id: string) => void;
+  onEditNap?: (id: string) => void;
+}
+
+interface CaffeineItem extends CaffeineData {
+  type: "caffeine";
+  uniqueKey: string;
+}
+
+interface SleepItemWithKey extends TimeData {
+  type: "sleep";
+  uniqueKey: string;
+}
+
+interface NapItemWithKey extends TimeData {
+  type: "nap";
+  uniqueKey: string;
+}
+
+type TrackedItem = CaffeineItem | SleepItemWithKey | NapItemWithKey;
+
+const TrackedItemsList: React.FC<TrackedItemsListProps> = ({
   caffeineData = [],
   sleepData = [],
   napData = [],
@@ -20,18 +49,45 @@ const TrackedItemsList = ({
   onEditNap,
 }) => {
   // Combine all data and sort by timestamp (most recent first)
-  const allData = [
-    ...caffeineData.map((item) => ({ ...item, type: "caffeine", uniqueKey: `caffeine-${item.id}` })),
-    ...sleepData.map((item) => ({ ...item, type: "sleep", uniqueKey: `sleep-${item.id}` })),
-    ...napData.map((item) => ({ ...item, type: "nap", uniqueKey: `nap-${item.id}` })),
+  const allData: TrackedItem[] = [
+    ...caffeineData.map(
+      (item) =>
+        ({
+          ...item,
+          type: "caffeine",
+          uniqueKey: `caffeine-${item.id}`,
+        } as CaffeineItem)
+    ),
+    ...sleepData.map(
+      (item) =>
+        ({
+          ...item,
+          type: "sleep",
+          uniqueKey: `sleep-${item.id}`,
+        } as SleepItemWithKey)
+    ),
+    ...napData.map(
+      (item) =>
+        ({
+          ...item,
+          type: "nap",
+          uniqueKey: `nap-${item.id}`,
+        } as NapItemWithKey)
+    ),
   ].sort((a, b) => {
     // Sort by time (most recent first)
-    const timeA = a.type === "caffeine" ? a.timestamp : a.startTime;
-    const timeB = b.type === "caffeine" ? b.timestamp : b.startTime;
+    const timeA =
+      a.type === "caffeine"
+        ? a.timestamp
+        : (a as SleepItemWithKey | NapItemWithKey).startTime;
+    const timeB =
+      b.type === "caffeine"
+        ? b.timestamp
+        : (b as SleepItemWithKey | NapItemWithKey).startTime;
     return timeB - timeA;
   });
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({ item }: { item: TrackedItem }) => {
     if (item.type === "caffeine") {
       return (
         <View style={[styles.itemContainer, styles.caffeineItem]}>
@@ -43,13 +99,17 @@ const TrackedItemsList = ({
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[styles.actionButton, styles.editButton]}
-              onPress={() => onEditCaffeine && onEditCaffeine(item.id)}
+              onPress={() =>
+                onEditCaffeine && item.id && onEditCaffeine(item.id)
+              }
             >
               <Text style={styles.editButtonText}>✎</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.deleteButton]}
-              onPress={() => onDeleteCaffeine && onDeleteCaffeine(item.id)}
+              onPress={() =>
+                onDeleteCaffeine && item.id && onDeleteCaffeine(item.id)
+              }
             >
               <Text style={styles.deleteButtonText}>✕</Text>
             </TouchableOpacity>
@@ -73,20 +133,14 @@ const TrackedItemsList = ({
             <Text style={styles.itemDetail}>
               Duration: {formatDuration(item.startTime, item.endTime)}
             </Text>
-            {item.type === "sleep" && (
-              <View style={styles.ratingContainer}>
-                <Text style={styles.ratingLabel}>Quality: </Text>
-                <Text style={styles.ratingValue}>{item.rating}/10</Text>
-              </View>
-            )}
           </View>
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[styles.actionButton, styles.editButton]}
               onPress={() => {
-                if (isNap && onEditNap) {
+                if (isNap && onEditNap && item.id) {
                   onEditNap(item.id);
-                } else if (!isNap && onEditSleep) {
+                } else if (!isNap && onEditSleep && item.id) {
                   onEditSleep(item.id);
                 }
               }}
@@ -95,7 +149,9 @@ const TrackedItemsList = ({
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.deleteButton]}
-              onPress={() => onDeleteSleep && onDeleteSleep(item.id, isNap)}
+              onPress={() =>
+                onDeleteSleep && item.id && onDeleteSleep(item.id, isNap)
+              }
             >
               <Text style={styles.deleteButtonText}>✕</Text>
             </TouchableOpacity>
@@ -122,7 +178,7 @@ const TrackedItemsList = ({
     <FlatList
       data={allData}
       renderItem={renderItem}
-      keyExtractor={(item) => item.uniqueKey || item.id}
+      keyExtractor={(item) => item.uniqueKey || item.id || ""}
       contentContainerStyle={styles.listContainer}
       showsVerticalScrollIndicator={false}
     />

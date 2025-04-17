@@ -1,31 +1,30 @@
-import React from 'react';
-import { Text, TextProps, StyleSheet } from 'react-native';
-import { useThemeColor } from '@/hooks/useThemeColor';
-
-export type TextType = 'default' | 'defaultSemiBold' | 'title' | 'subtitle' | 'link';
-
-export interface ThemedTextProps extends TextProps {
-  type?: TextType;
-  lightColor?: string;
-  darkColor?: string;
-}
+import React from "react";
+import { Text, StyleSheet } from "react-native";
+import { useThemeColor } from "@/hooks/useThemeColor";
+import { ThemedTextProps } from "@/src/types";
 
 export function ThemedText(props: ThemedTextProps) {
-  const { style, type = 'default', lightColor, darkColor, ...otherProps } = props;
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+  const {
+    style,
+    type = "default",
+    lightColor,
+    darkColor,
+    ...otherProps
+  } = props;
+  const color = useThemeColor({ light: lightColor, dark: darkColor }, "text");
 
   let textStyle;
   switch (type) {
-    case 'title':
+    case "title":
       textStyle = styles.title;
       break;
-    case 'subtitle':
+    case "subtitle":
       textStyle = styles.subtitle;
       break;
-    case 'defaultSemiBold':
+    case "defaultSemiBold":
       textStyle = styles.defaultSemiBold;
       break;
-    case 'link':
+    case "link":
       textStyle = styles.link;
       break;
     default:
@@ -43,22 +42,22 @@ const styles = StyleSheet.create({
   defaultSemiBold: {
     fontSize: 16,
     lineHeight: 24,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   title: {
     fontSize: 28,
     lineHeight: 36,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   subtitle: {
     fontSize: 20,
     lineHeight: 28,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   link: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#007AFF',
-    textDecorationLine: 'underline',
+    color: "#007AFF",
+    textDecorationLine: "underline",
   },
 });

@@ -1,23 +1,10 @@
 import React from "react";
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
-
-export type IconSymbolName =
-  | "house.fill"
-  | "paperplane.fill"
-  | "chart.bar.fill"
-  | "chevron.left.forwardslash.chevron.right"
-  | "chart.xyaxis.line";
-
-// Add types for the Font Awesome and Material Icons
-type FontAwesomeIconName = keyof typeof FontAwesome.glyphMap;
-type MaterialIconsName = keyof typeof MaterialIcons.glyphMap;
-
-export interface IconSymbolProps {
-  name: IconSymbolName;
-  size?: number;
-  color?: string;
-  style?: any;
-}
+import {
+  IconSymbolProps,
+  FontAwesomeIconName,
+  MaterialIconsName,
+} from "@/src/types";
 
 export function IconSymbol({
   name,

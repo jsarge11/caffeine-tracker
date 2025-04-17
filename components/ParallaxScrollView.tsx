@@ -3,34 +3,34 @@ import {
   View,
   StyleSheet,
   Animated,
-  ScrollView,
-  Platform,
   useWindowDimensions,
   ColorValue,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
-interface Props {
+interface ParallelScrollViewProps {
   children: React.ReactNode;
   headerImage?: React.ReactNode;
   headerBackgroundColor?: {
     light: ColorValue;
     dark: ColorValue;
   };
+  headerHeight?: number;
 }
 
 export default function ParallaxScrollView({
   children,
   headerImage,
   headerBackgroundColor = { light: "#A1CEDC", dark: "#1D3D47" },
-}: Props) {
+  headerHeight = 80,
+}: ParallelScrollViewProps) {
   const colorScheme = useColorScheme();
   const { top } = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  const HEADER_HEIGHT = 100;
+  const HEADER_HEIGHT = headerHeight;
 
   const headerTranslateY = scrollY.interpolate({
     inputRange: [0, HEADER_HEIGHT],
@@ -61,6 +61,7 @@ export default function ParallaxScrollView({
             height: HEADER_HEIGHT,
             transform: [{ translateY: headerTranslateY }],
             backgroundColor,
+            paddingTop: top,
           },
         ]}
       >
@@ -80,7 +81,7 @@ export default function ParallaxScrollView({
       <Animated.ScrollView
         contentContainerStyle={[
           styles.scrollViewContent,
-          { paddingTop: HEADER_HEIGHT + top },
+          { paddingTop: HEADER_HEIGHT + top / 2 },
         ]}
         scrollEventThrottle={16}
         onScroll={Animated.event(
@@ -90,7 +91,7 @@ export default function ParallaxScrollView({
           }
         )}
       >
-        <View style={styles.content}>{children}</View>
+        {children}
       </Animated.ScrollView>
     </View>
   );
@@ -119,8 +120,5 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     paddingHorizontal: 16,
     paddingBottom: 16,
-  },
-  content: {
-    paddingTop: 16,
   },
 });
