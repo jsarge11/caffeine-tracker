@@ -10,8 +10,15 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import SleepInput from "../../src/components/SleepInput";
 import { getEntryById, updateSleepEntry } from "../../src/storage/asyncStorage";
 import { TimeData } from "@/src/types/data.types";
+import { ThemedText } from "../../components/ThemedText";
 
-export default function EditNapScreen() {
+interface EditNapScreenProps {
+  navigation: {
+    goBack: () => void;
+  };
+}
+
+export default function EditNapScreen({ navigation }: EditNapScreenProps) {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const [napData, setNapData] = useState<TimeData | null>(null);
@@ -19,38 +26,29 @@ export default function EditNapScreen() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        if (!id) {
-          setError("No nap ID provided");
+    const loadNapData = async () => {
+      if (id) {
+        try {
+          setLoading(true);
+          const data = await getEntryById("nap", id as string);
+          setNapData(data as TimeData);
+          setError(null);
+        } catch (error) {
+          console.error("Error loading nap data:", error);
+          setError("Failed to load nap data");
+        } finally {
           setLoading(false);
-          return;
         }
-
-        const data = await getEntryById<TimeData>("nap", id as string);
-
-        if (!data) {
-          setError("Entry not found");
-          setLoading(false);
-          return;
-        }
-
-        setNapData(data);
-      } catch (err) {
-        console.error("Error loading nap data:", err);
-        setError("Failed to load data");
-      } finally {
-        setLoading(false);
       }
     };
 
-    loadData();
+    loadNapData();
   }, [id]);
 
   const handleUpdate = async (updatedData: TimeData) => {
     try {
       await updateSleepEntry(id as string, updatedData, true);
-      router.back();
+      navigation.goBack();
     } catch (error) {
       console.error("Error updating nap data:", error);
       setError("Failed to update data");
@@ -62,25 +60,16 @@ export default function EditNapScreen() {
       <Stack.Screen
         options={{
           title: "Edit Nap",
-          headerStyle: {
-            backgroundColor: "#FFA500",
-          },
-          headerTintColor: "#fff",
+          headerTintColor: "#008080",
         }}
       />
       <View style={styles.content}>
         {loading ? (
-          <ActivityIndicator size="large" color="#FFA500" />
+          <ActivityIndicator size="large" color="#008080" />
         ) : error ? (
-          <Text style={styles.errorText}>{error}</Text>
-        ) : napData ? (
-          <SleepInput
-            onSave={handleUpdate}
-            isNap={true}
-            initialData={napData}
-          />
+          <ThemedText style={styles.errorText}>{error}</ThemedText>
         ) : (
-          <Text style={styles.errorText}>Failed to load nap data</Text>
+          napData && <SleepInput onSave={handleUpdate} initialData={napData} isNap={true} />
         )}
       </View>
     </SafeAreaView>

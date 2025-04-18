@@ -1,5 +1,12 @@
 // Process data utilities for the Caffeine Tracker app
-import { CaffeineData, TimeData } from "../types/data.types";
+import {
+  BubbleChartData,
+  CaffeineEntryWithDate,
+  DailyData,
+  NapEntryWithDate,
+  SleepEntryWithDate,
+} from "../types/data.types";
+import { getSleepDuration } from "../utils/fns";
 
 // Maximum values for scaling in dashboard
 export const MAX_VALUES: { [key: string]: number } = {
@@ -17,103 +24,28 @@ import {
   deleteCaffeineEntry,
   deleteSleepEntry,
 } from "./asyncStorage";
-import { DayData } from "../types/data.types";
 
 // Process data for dashboard
-export const processDataForDashboard = async (
-  daysToShow: number
-): Promise<DayData[]> => {
+export const processDataForDashboard = async (): Promise<DailyData> => {
   try {
     // Fetch caffeine, sleep and nap data using the correct function names
-    const caffeineData: CaffeineData[] = (await getAllCaffeineData()) || [];
-    const sleepData: TimeData[] = (await getAllSleepData()) || [];
-    const napData: TimeData[] = (await getAllNapData()) || []; // Get nap data from NAP_DATA storage key
+    const caffeine: CaffeineEntryWithDate[] =
+      (await getAllCaffeineData()) || [];
+    const sleep: SleepEntryWithDate[] = (await getAllSleepData()) || [];
+    const naps: NapEntryWithDate[] = (await getAllNapData()) || []; // Get nap data from NAP_DATA storage key
 
-    console.log("Total sleep entries found:", sleepData.length);
-    console.log("Total nap entries found:", napData.length);
-
-    // Get dates for the past N days
-    const daysArray: DayData[] = [];
-    const today = new Date();
-
-    for (let i = daysToShow - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-
-      const dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
-        date.getDay()
-      ];
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
-      const dateString = `${month}/${day}`;
-
-      daysArray.push({
-        day: dayOfWeek,
-        date: dateString,
-        caffeine: 0,
-        sleepHours: 0,
-        naps: 0,
-      });
-    }
-
-    // Process caffeine data
-    caffeineData.forEach((entry) => {
-      const entryDate = new Date(entry.timestamp);
-      const month = entryDate.getMonth() + 1;
-      const day = entryDate.getDate();
-      const dateString = `${month}/${day}`;
-
-      const dayData = daysArray.find((d) => d.date === dateString);
-      if (dayData) {
-        dayData.caffeine += entry.amount;
-      }
-    });
-
-    // Process sleep data - now only for actual sleep (not naps)
-    sleepData.forEach((entry) => {
-      const entryDate = new Date(entry.startTime);
-      const month = entryDate.getMonth() + 1;
-      const day = entryDate.getDate();
-      const dateString = `${month}/${day}`;
-
-      const dayData = daysArray.find((d) => d.date === dateString);
-      if (dayData) {
-        // Calculate sleep hours from start and end time
-        const hoursSlept =
-          entry.endTime && entry.startTime
-            ? (entry.endTime - entry.startTime) / (1000 * 60 * 60)
-            : 0;
-
-        dayData.sleepHours = hoursSlept;
-
-        // Log to help debug
-        console.log(
-          `Processing sleep data for ${dateString}: Hours = ${hoursSlept.toFixed(
-            1
-          )}`
-        );
-      }
-    });
-
-    // Process nap data - now using completely separate nap data
-    napData.forEach((entry) => {
-      const entryDate = new Date(entry.startTime);
-      const month = entryDate.getMonth() + 1;
-      const day = entryDate.getDate();
-      const dateString = `${month}/${day}`;
-
-      const dayData = daysArray.find((d) => d.date === dateString);
-      if (dayData) {
-        // Increment nap count and log for debugging
-        dayData.naps += 1;
-        console.log(`Added nap for ${dateString}, count now: ${dayData.naps}`);
-      }
-    });
-
-    return daysArray;
+    return {
+      caffeine,
+      sleep,
+      naps,
+    };
   } catch (error) {
     console.error("Error processing dashboard data:", error);
-    return [];
+    return {
+      caffeine: [],
+      sleep: [],
+      naps: [],
+    };
   }
 };
 
@@ -127,4 +59,88 @@ export const deleteSleepEntryById = async (
   isNap: boolean = false
 ): Promise<boolean> => {
   return await deleteSleepEntry(id, isNap);
+};
+
+export const normalizeDataForDashboard = (
+  data: DailyData
+): BubbleChartData[] => {
+  const { caffeine, sleep, naps } = data;
+
+  const days: {
+    [key: string]: { caffeine: number; sleep: number; naps: number };
+  } = {};
+
+  caffeine.forEach((c) => {
+    const { date } = c;
+    if (!days[date]) {
+      days[date] = { caffeine: 0, sleep: 0, naps: 0 };
+    }
+    days[date].caffeine += c.amount;
+  });
+
+  sleep.forEach((s) => {
+    const { date } = s;
+    if (!days[date]) {
+      days[date] = { caffeine: 0, sleep: 0, naps: 0 };
+    }
+    days[date].sleep += getSleepDuration(s);
+  });
+
+  naps.forEach((n) => {
+    const { date } = n;
+    if (!days[date]) {
+      days[date] = { caffeine: 0, sleep: 0, naps: 0 };
+    }
+    days[date].naps += getSleepDuration(n);
+  });
+
+  const bubbleChartData: BubbleChartData[] = Object.entries(days).map(
+    ([date, { caffeine, sleep, naps }]) => ({
+      date,
+      caffeine,
+      hoursSlept: sleep / (1000 * 60 * 60), // Convert milliseconds to hours
+      naps: naps / (1000 * 60 * 60), // Convert milliseconds to hours
+    })
+  );
+
+  console.log(bubbleChartData);
+  return bubbleChartData;
+};
+
+export const normalizeData = (data: BubbleChartData[]) => {
+  console.log("Raw data received in normalizeData:", data);
+
+  // Ensure we have valid data before processing
+  if (!data || data.length === 0) {
+    console.log("No data to normalize");
+    return { dates: [], hoursSlept: [], naps: [], caffeine: [] };
+  }
+
+  // Parse date strings to Date objects
+  const dates = data.map((d) => {
+    console.log(`Converting date string: ${d.date}`);
+    // Fix timezone issue by parsing the date and setting it to noon local time
+    // This ensures the date is displayed correctly regardless of timezone
+    const dateParts = d.date.split("-");
+    if (dateParts.length === 3) {
+      const year = parseInt(dateParts[0]);
+      const month = parseInt(dateParts[1]) - 1; // JS months are 0-indexed
+      const day = parseInt(dateParts[2]);
+      return new Date(year, month, day, 12, 0, 0);
+    }
+    return new Date(d.date);
+  });
+
+  const hoursSlept = data.map((d) => d.hoursSlept || 0);
+  const naps = data.map((d) => d.naps || 0);
+  const caffeine = data.map((d) => d.caffeine || 0);
+
+  console.log("Normalized data:", {
+    dates: dates.map((d) => d.toISOString()),
+    hoursSlept,
+    naps,
+    caffeine,
+  });
+
+  return { dates, hoursSlept, naps, caffeine };
 };

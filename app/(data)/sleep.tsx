@@ -5,13 +5,19 @@ import SleepInput from "../../src/components/SleepInput";
 import { saveSleepData } from "../../src/storage/asyncStorage";
 import { TimeData } from "../../src/types/data.types";
 
-export default function AddSleepScreen() {
+interface AddSleepScreenProps {
+  navigation: {
+    goBack: () => void;
+  };
+}
+
+export default function AddSleepScreen({ navigation }: AddSleepScreenProps) {
   const router = useRouter();
 
   const handleSave = async (sleepData: TimeData) => {
     try {
       await saveSleepData(sleepData);
-      router.back();
+      navigation.goBack();
     } catch (error) {
       console.error("Error saving sleep data:", error);
       // Could add error handling UI here
@@ -19,20 +25,17 @@ export default function AddSleepScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen
-        options={{
+    <View style={styles.container}>
+      <Stack.Screen 
+        options={{ 
           title: "Add Sleep",
-          headerStyle: {
-            backgroundColor: "#1E90FF",
-          },
-          headerTintColor: "#fff",
-        }}
+          headerTintColor: '#008080',
+        }} 
       />
       <View style={styles.content}>
         <SleepInput onSave={handleSave} isNap={false} />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

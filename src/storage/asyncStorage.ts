@@ -1,8 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   CaffeineData,
+  CaffeineEntryWithDate,
+  DailyData,
   DateData,
   EntryType,
+  NapEntryWithDate,
+  SleepEntryWithDate,
   TimeData,
 } from "../types/data.types";
 
@@ -13,16 +17,6 @@ const STORAGE_KEYS = {
   NAP_DATA: "caffeine_tracker_nap_data",
 };
 
-interface CaffeineEntryWithDate extends CaffeineData, DateData {}
-interface SleepEntryWithDate extends TimeData, DateData {}
-interface NapEntryWithDate extends TimeData, DateData {}
-
-interface DailyData {
-  caffeine: CaffeineEntryWithDate[];
-  sleep: SleepEntryWithDate[];
-  nap: NapEntryWithDate[];
-}
-
 // Save caffeine data
 export const saveCaffeineData = async (
   caffeineData: Omit<CaffeineData, "id">
@@ -30,10 +24,13 @@ export const saveCaffeineData = async (
   try {
     // Format the data to include a date string for easier filtering
     const date = new Date(caffeineData.timestamp);
+    // Use local date formatting instead of UTC to avoid timezone issues
+    const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    
     const formattedData: CaffeineEntryWithDate = {
       ...caffeineData,
       id: Date.now().toString(),
-      date: date.toISOString().split("T")[0],
+      date: formattedDate,
     };
 
     // Get existing data
@@ -65,10 +62,13 @@ export const saveSleepData = async (
   try {
     // Format the data to include a date string for easier filtering
     const date = new Date(sleepData.startTime);
+    // Use local date formatting instead of UTC to avoid timezone issues
+    const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    
     const formattedData: SleepEntryWithDate = {
       ...sleepData,
       id: Date.now().toString(),
-      date: date.toISOString().split("T")[0],
+      date: formattedDate,
     };
 
     // Always use the sleep storage key
@@ -99,10 +99,13 @@ export const saveNapData = async (
   try {
     // Format the data to include a date string for easier filtering
     const date = new Date(napData.startTime);
+    // Use local date formatting instead of UTC to avoid timezone issues
+    const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    
     const formattedData: NapEntryWithDate = {
       ...napData,
       id: Date.now().toString(),
-      date: date.toISOString().split("T")[0],
+      date: formattedDate,
     };
 
     // Always use the nap storage key
@@ -168,7 +171,7 @@ export const getDataForDate = async (
   try {
     // Convert date to YYYY-MM-DD format
     const dateObj = typeof date === "string" ? new Date(date) : date;
-    const dateString = dateObj.toISOString().split("T")[0];
+    const dateString = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
 
     // Get all data
     const caffeineData = await getAllCaffeineData();
@@ -179,11 +182,11 @@ export const getDataForDate = async (
     return {
       caffeine: caffeineData.filter((item) => item.date === dateString),
       sleep: sleepData.filter((item) => item.date === dateString),
-      nap: napData.filter((item) => item.date === dateString),
+      naps: napData.filter((item) => item.date === dateString),
     };
   } catch (error) {
     console.error("Error getting data for date:", error);
-    return { caffeine: [], sleep: [], nap: [] };
+    return { caffeine: [], sleep: [], naps: [] };
   }
 };
 

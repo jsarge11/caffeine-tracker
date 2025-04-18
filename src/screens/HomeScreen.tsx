@@ -15,13 +15,9 @@ import {
   deleteSleepEntry,
 } from "../storage/asyncStorage";
 import { formatDateFull } from "../utils/dateTime";
-import { CaffeineData, TimeData } from "../types/data.types";
-
-interface TodayData {
-  caffeine: CaffeineData[];
-  sleep: TimeData[];
-  nap: TimeData[];
-}
+import { DailyData } from "../types/data.types";
+import { sleepTips } from "../data/sleepTips";
+import { Ionicons } from "@expo/vector-icons";
 
 interface HomeScreenProps {
   navigation: {
@@ -30,18 +26,22 @@ interface HomeScreenProps {
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const [todayData, setTodayData] = useState<TodayData>({
+  const [todayData, setTodayData] = useState<DailyData>({
     caffeine: [],
     sleep: [],
-    nap: [],
+    naps: [],
   });
   const [totalCaffeine, setTotalCaffeine] = useState<number>(0);
   const [date] = useState<Date>(new Date());
+  const [sleepTip, setSleepTip] = useState<string>("");
 
   // Load data when screen is focused
   useFocusEffect(
     useCallback(() => {
       loadTodayData();
+      // Get a random sleep tip
+      const randomIndex = Math.floor(Math.random() * sleepTips.length);
+      setSleepTip(sleepTips[randomIndex]);
     }, [date])
   );
 
@@ -95,6 +95,19 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         <Text style={styles.date}>{formatDateFull(date)}</Text>
       </View>
 
+      {/* Sleep Tip Box */}
+      <View style={styles.sleepTipContainer}>
+        <View style={styles.sleepTipContent}>
+          <Ionicons
+            name="moon"
+            size={20}
+            color="#008080"
+            style={styles.sleepTipIcon}
+          />
+          <Text style={styles.sleepTipText}>{sleepTip}</Text>
+        </View>
+      </View>
+
       <View style={styles.summaryCard}>
         <Text style={styles.summaryTitle}>Today's Summary</Text>
         <View style={styles.summaryContent}>
@@ -108,9 +121,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Nap Entries</Text>
-            <Text style={styles.summaryValue}>{todayData.nap.length}</Text>
+            <Text style={styles.summaryValue}>{todayData.naps.length}</Text>
           </View>
         </View>
+
+        {/* Add All Entries button */}
+        <TouchableOpacity
+          style={styles.allEntriesButton}
+          onPress={() => navigation.navigate("AllEntries")}
+        >
+          <Text style={styles.allEntriesButtonText}>View All Entries</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.buttonContainer}>
@@ -141,7 +162,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         <TrackedItemsList
           caffeineData={todayData.caffeine}
           sleepData={todayData.sleep}
-          napData={todayData.nap}
+          napData={todayData.naps}
           onDeleteCaffeine={handleDeleteCaffeine}
           onDeleteSleep={handleDeleteSleep}
           onEditCaffeine={handleEditCaffeine}
@@ -247,6 +268,51 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: "700",
     fontSize: 16,
+  },
+  allEntriesButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.small,
+    paddingHorizontal: spacing.medium,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: spacing.medium,
+  },
+  allEntriesButtonText: {
+    color: colors.white,
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  sleepTipContainer: {
+    marginTop: 18,
+    marginHorizontal: spacing.large,
+    marginBottom: spacing.medium,
+    backgroundColor: "#f5f5f5",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  sleepTipContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  sleepTipIcon: {
+    marginRight: 10,
+  },
+  sleepTipText: {
+    fontSize: 14,
+    color: "#555",
+    flex: 1,
+    fontStyle: "italic",
   },
 });
 

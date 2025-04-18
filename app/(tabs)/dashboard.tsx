@@ -1,9 +1,15 @@
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import ParallaxScrollView from "../../components/ParallaxScrollView";
 import { BubbleChart } from "@/components/ui/BubbleChart";
 import { View, Text, StyleSheet, Animated, Easing } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import {
+  normalizeDataForDashboard,
+  processDataForDashboard,
+} from "@/src/storage/dataService";
+import { CaffeineData, DailyData, TimeData } from "@/src/types";
+import { useFocusEffect } from "@react-navigation/native";
 
 // Custom animated header component for the dashboard
 const DashboardHeader = () => {
@@ -61,13 +67,49 @@ const DashboardHeader = () => {
 };
 
 export default function DashboardScreen() {
+  const [data, setData] = React.useState<DailyData>({
+    caffeine: [],
+    sleep: [],
+    naps: [],
+  });
+
+  const fetchData = async () => {
+    console.log("Dashboard: Fetching data...");
+    const { caffeine, sleep, naps } = await processDataForDashboard();
+    console.log("Dashboard: Data fetched:", {
+      caffeineCount: caffeine.length,
+      sleepCount: sleep.length,
+      napsCount: naps.length,
+    });
+    setData({ caffeine, sleep, naps });
+  };
+
+  // Use useFocusEffect to refresh data when the screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [])
+  );
+
+  // Initial data load
+  React.useEffect(() => {
+    fetchData();
+  }, []);
+
+  const bubbleChartData = useMemo(() => {
+    console.log("Dashboard: Normalizing data for bubble chart");
+    const normalizedData = normalizeDataForDashboard(data);
+    console.log("Dashboard: Normalized data length:", normalizedData.length);
+    return normalizedData;
+  }, [data]);
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#008080", dark: "#1D3D47" }}
       headerImage={<DashboardHeader />}
       headerHeight={60}
     >
-      <BubbleChart data={[]} />
+      <BubbleChart data={bubbleChartData} />
     </ParallaxScrollView>
   );
 }

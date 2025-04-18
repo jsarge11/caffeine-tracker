@@ -25,6 +25,9 @@ export default function HomeScreen() {
           case 'AddNap':
             router.push('/(data)/nap' as any);
             break;
+          case 'AllEntries':
+            router.push('/(data)/all-entries' as any);
+            break;
           case 'EditCaffeine':
             router.push({
               pathname: '/(data)/edit-caffeine' as any,

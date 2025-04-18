@@ -11,45 +11,43 @@ import { getEntryById, updateSleepEntry } from "../../src/storage/asyncStorage";
 import { ThemedText } from "../../components/ThemedText";
 import { TimeData } from "@/src/types/data.types";
 
-export default function EditSleepScreen() {
+interface EditSleepScreenProps {
+  navigation: {
+    goBack: () => void;
+  };
+}
+
+export default function EditSleepScreen({ navigation }: EditSleepScreenProps) {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const [sleepData, setSleepData] = useState<TimeData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        if (!id) {
-          setError("No entry ID provided");
+    const loadSleepData = async () => {
+      if (id) {
+        try {
+          setLoading(true);
+          const data = await getEntryById("sleep", id as string);
+          setSleepData(data as TimeData);
+          setError(null);
+        } catch (error) {
+          console.error("Error loading sleep data:", error);
+          setError("Failed to load sleep data");
+        } finally {
           setLoading(false);
-          return;
         }
-
-        const data = await getEntryById<TimeData>("sleep", id as string);
-        if (!data) {
-          setError("Entry not found");
-          setLoading(false);
-          return;
-        }
-
-        setSleepData(data);
-      } catch (err) {
-        console.error("Error loading sleep data:", err);
-        setError("Failed to load data");
-      } finally {
-        setLoading(false);
       }
     };
 
-    loadData();
+    loadSleepData();
   }, [id]);
 
   const handleUpdate = async (updatedData: TimeData) => {
     try {
-      await updateSleepEntry(id as string, updatedData, false);
-      router.back();
+      await updateSleepEntry(id as string, updatedData);
+      navigation.goBack();
     } catch (error) {
       console.error("Error updating sleep data:", error);
       setError("Failed to update data");
@@ -61,24 +59,16 @@ export default function EditSleepScreen() {
       <Stack.Screen
         options={{
           title: "Edit Sleep",
-          headerStyle: {
-            backgroundColor: "#1E90FF",
-          },
-          headerTintColor: "#fff",
+          headerTintColor: '#008080',
         }}
       />
-
       <View style={styles.content}>
         {loading ? (
-          <ActivityIndicator size="large" color="#1E90FF" />
+          <ActivityIndicator size="large" color="#008080" />
         ) : error ? (
           <ThemedText style={styles.errorText}>{error}</ThemedText>
         ) : (
-          <SleepInput
-            onSave={handleUpdate}
-            initialData={sleepData}
-            isNap={false}
-          />
+          sleepData && <SleepInput onSave={handleUpdate} initialData={sleepData} isNap={false} />
         )}
       </View>
     </SafeAreaView>

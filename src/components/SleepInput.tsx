@@ -32,6 +32,12 @@ const SleepInput: React.FC<SleepInputProps> = ({
   const hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
   const minutes = [0, 15, 30, 45];
 
+  const isDisabled =
+    startHour !== null &&
+    startMinute !== null &&
+    endHour !== null &&
+    endMinute !== null;
+
   // Initialize form with existing data if provided
   useEffect(() => {
     if (initialData) {
@@ -84,7 +90,7 @@ const SleepInput: React.FC<SleepInputProps> = ({
   }, [initialData, isNap]);
 
   const handleSave = (): void => {
-    if (!startHour || !startMinute || !endHour || !endMinute) {
+    if (!isDisabled) {
       return; // Don't save incomplete data
     }
 
@@ -136,21 +142,12 @@ const SleepInput: React.FC<SleepInputProps> = ({
       }
     }
 
-    // Calculate duration in milliseconds
-    const durationMs = endDate.getTime() - startDate.getTime();
-
-    // Convert to hours for sleep or minutes for nap
-    const duration = isNap
-      ? Math.round(durationMs / (60 * 1000)) // Minutes for nap
-      : Math.round((durationMs / (60 * 60 * 1000)) * 10) / 10; // Hours for sleep with one decimal
-
     // Create the data object
     const timeData: TimeData = {
       id: initialData?.id || Date.now().toString(),
       isNap,
       startTime: startDate.getTime(),
       endTime: endDate.getTime(),
-      duration: duration,
     };
 
     // If editing, pass the id along
@@ -458,13 +455,12 @@ const SleepInput: React.FC<SleepInputProps> = ({
                 ? "Save Nap"
                 : "Save Sleep"
             }
-            disabled={!startHour || !startMinute || !endHour || !endMinute}
+            disabled={!isDisabled}
             onPress={handleSave}
             buttonStyle={[
               styles.saveButton,
               isNap ? styles.napSaveButton : styles.sleepSaveButton,
-              (!startHour || !startMinute || !endHour || !endMinute) &&
-                styles.disabledButton,
+              !isDisabled && styles.disabledButton,
             ]}
             titleStyle={styles.saveButtonText}
             disabledStyle={styles.disabledButton}

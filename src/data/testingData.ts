@@ -1,6 +1,6 @@
-import { TrackerData } from "../types/data.types";
+import { BubbleChartData } from "../types/data.types";
 
-export const fullData: TrackerData[] = [
+export const fullData: BubbleChartData[] = [
   { date: "2025-04-15", naps: 1, caffeine: 100, hoursSlept: 3 },
   { date: "2025-04-16", naps: 0, caffeine: 200, hoursSlept: 4 },
   { date: "2025-04-17", naps: 2, caffeine: 150, hoursSlept: 5 },

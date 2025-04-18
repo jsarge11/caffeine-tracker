@@ -20,20 +20,17 @@ export default function AddCaffeineScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen
-        options={{
+    <View style={styles.container}>
+      <Stack.Screen 
+        options={{ 
           title: "Add Caffeine",
-          headerStyle: {
-            backgroundColor: "#008080",
-          },
-          headerTintColor: "#fff",
-        }}
+          headerTintColor: '#008080',
+        }} 
       />
-      <View style={styles.content}>
+      <SafeAreaView style={styles.content}>
         <CaffeineInput onSave={handleSave} />
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 

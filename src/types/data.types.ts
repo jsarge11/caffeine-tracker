@@ -1,4 +1,10 @@
-export interface TrackerData {
+export interface DashboardData {
+  caffeineData: CaffeineData[];
+  sleepData: TimeData[];
+  napData: TimeData[];
+}
+
+export interface BubbleChartData {
   date: string;
   naps: number;
   caffeine: number;
@@ -23,7 +29,6 @@ export interface TimeData {
   id: string;
   startTime: number;
   endTime: number;
-  duration: number;
   isNap: boolean;
 }
 
@@ -40,3 +45,13 @@ export interface DateData {
 }
 
 export type EntryType = "caffeine" | "sleep" | "nap";
+
+export interface CaffeineEntryWithDate extends CaffeineData, DateData {}
+export interface SleepEntryWithDate extends TimeData, DateData {}
+export interface NapEntryWithDate extends TimeData, DateData {}
+
+export interface DailyData {
+  caffeine: CaffeineEntryWithDate[];
+  sleep: SleepEntryWithDate[];
+  naps: NapEntryWithDate[];
+}

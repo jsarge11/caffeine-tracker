@@ -1,5 +1,6 @@
-import { TrackerData } from "@/src/types/data.types";
-import { WINDOW_SIZE, normalizeData } from "@/src/utils/fns";
+import { normalizeData } from "@/src/storage/dataService";
+import { BubbleChartData } from "@/src/types/data.types";
+import { WINDOW_SIZE } from "@/src/utils/fns";
 import React, { useMemo } from "react";
 import {
   View,
@@ -20,17 +21,22 @@ import {
 
 const { width } = Dimensions.get("window");
 
-export const BubbleChart: React.FC<{ data: TrackerData[] }> = ({ data }) => {
+export const BubbleChart: React.FC<{ data: BubbleChartData[] }> = ({
+  data,
+}) => {
   const [windowStart, setWindowStart] = React.useState(0);
 
   const chartData = useMemo(() => {
     return data.slice(windowStart, windowStart + WINDOW_SIZE);
-  }, [windowStart]);
+  }, [windowStart, data]);
 
-  const { dates, hoursSlept, naps, caffeine } = useMemo(
-    () => normalizeData(chartData),
-    [chartData]
-  );
+  // Use the local normalizeData function defined at the bottom of this file
+  const { dates, hoursSlept, naps, caffeine } = useMemo(() => {
+    // Make sure we're using the local normalizeData function
+    const result = normalizeData(chartData);
+    console.log("Using local normalizeData, result:", result);
+    return result;
+  }, [chartData]);
 
   // Calculate averages for the current window
   const windowAverages = useMemo(() => {
@@ -51,20 +57,19 @@ export const BubbleChart: React.FC<{ data: TrackerData[] }> = ({ data }) => {
     const allHoursSlept = data.map((d) => d.hoursSlept);
     const allNaps = data.map((d) => d.naps);
 
+    // Add null checks to prevent NaN
     return {
-      caffeine: Number(
-        (allCaffeine.reduce((a, b) => a + b, 0) / allCaffeine.length).toFixed(1)
-      ),
-      hoursSlept: Number(
-        (
-          allHoursSlept.reduce((a, b) => a + b, 0) / allHoursSlept.length
-        ).toFixed(1)
-      ),
-      naps: Number(
-        (allNaps.reduce((a, b) => a + b, 0) / allNaps.length).toFixed(1)
-      ),
+      caffeine: allCaffeine.length > 0 
+        ? Number((allCaffeine.reduce((a, b) => a + b, 0) / allCaffeine.length).toFixed(1))
+        : 0,
+      hoursSlept: allHoursSlept.length > 0
+        ? Number((allHoursSlept.reduce((a, b) => a + b, 0) / allHoursSlept.length).toFixed(1))
+        : 0,
+      naps: allNaps.length > 0
+        ? Number((allNaps.reduce((a, b) => a + b, 0) / allNaps.length).toFixed(1))
+        : 0,
     };
-  }, []);
+  }, [data]); // Add data as a dependency
 
   const canGoBack = windowStart > 0;
   const canGoForward = windowStart + WINDOW_SIZE < data.length;
@@ -75,7 +80,10 @@ export const BubbleChart: React.FC<{ data: TrackerData[] }> = ({ data }) => {
   // Format date for x-axis
   const formatDate = (date?: Date) => {
     if (!date) return "";
-    return `${date.getMonth() + 1}/${date.getDate()}`;
+    // Ensure we're displaying the correct date by using local date methods
+    return `${date.toLocaleString("default", {
+      month: "numeric",
+    })}/${date.getDate()}`;
   };
 
   const chartPadding = { top: 10, bottom: 50, left: 20, right: 65 };
@@ -162,19 +170,13 @@ export const BubbleChart: React.FC<{ data: TrackerData[] }> = ({ data }) => {
               }
             />
 
-            {/* Sleep Hours Line (green) */}
-            <VictoryLine
+            {/* Sleep Hours Bar (green) */}
+            <VictoryBar
               data={hoursSlept.map((y, index) => ({ x: dates[index], y }))}
               style={{
-                data: { stroke: "#4CAF50", strokeWidth: 3 },
+                data: { fill: "#4CAF50", opacity: 0.7 },
               }}
-            />
-
-            {/* Sleep data points with labels */}
-            <VictoryScatter
-              data={hoursSlept.map((y, index) => ({ x: dates[index], y }))}
-              size={4}
-              style={{ data: { fill: "#4CAF50" } }}
+              barWidth={8}
               labels={({ datum }) => `${datum.y}`}
               labelComponent={
                 <VictoryLabel
@@ -184,13 +186,19 @@ export const BubbleChart: React.FC<{ data: TrackerData[] }> = ({ data }) => {
               }
             />
 
-            {/* Nap Bars (blue) */}
-            <VictoryBar
+            {/* Nap Line (blue) */}
+            <VictoryLine
               data={naps.map((y, index) => ({ x: dates[index], y }))}
               style={{
-                data: { fill: "#2196F3", opacity: 0.7 },
+                data: { stroke: "#2196F3", strokeWidth: 3 },
               }}
-              barWidth={8}
+            />
+
+            {/* Nap data points with labels */}
+            <VictoryScatter
+              data={naps.map((y, index) => ({ x: dates[index], y }))}
+              size={4}
+              style={{ data: { fill: "#2196F3" } }}
               labels={({ datum }) => `${datum.y}`}
               labelComponent={
                 <VictoryLabel

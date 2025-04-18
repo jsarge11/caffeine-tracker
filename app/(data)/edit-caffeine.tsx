@@ -14,7 +14,13 @@ import {
 import { ThemedText } from "../../components/ThemedText";
 import { CaffeineData } from "@/src/types/data.types";
 
-export default function EditCaffeineScreen() {
+interface EditCaffeineScreenProps {
+  navigation: {
+    goBack: () => void;
+  };
+}
+
+export default function EditCaffeineScreen({ navigation }: EditCaffeineScreenProps) {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const [caffeineData, setCaffeineData] = useState<CaffeineData | null>(null);
@@ -52,7 +58,7 @@ export default function EditCaffeineScreen() {
   const handleUpdate = async (updatedData: CaffeineData) => {
     try {
       await updateCaffeineEntry(id as string, updatedData);
-      router.back();
+      navigation.goBack();
     } catch (error) {
       console.error("Error updating caffeine data:", error);
       setError("Failed to update data");
@@ -70,7 +76,6 @@ export default function EditCaffeineScreen() {
           headerTintColor: "#fff",
         }}
       />
-
       <View style={styles.content}>
         {loading ? (
           <ActivityIndicator size="large" color="#008080" />
