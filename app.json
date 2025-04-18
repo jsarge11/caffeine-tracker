@@ -17,6 +17,10 @@
           "fetch",
           "remote-notification",
           "fetch",
+          "remote-notification",
+          "fetch",
+          "remote-notification",
+          "fetch",
           "remote-notification"
         ],
         "ITSAppUsesNonExemptEncryption": false
@@ -43,6 +47,9 @@
           "resizeMode": "contain",
           "backgroundColor": "#008080"
         }
+      ],
+      [
+        "expo-updates"
       ]
     ],
     "primaryColor": "#008080",
@@ -54,6 +61,18 @@
       "eas": {
         "projectId": "459ceb37-f1b6-4d6d-bf78-2b92c545a328"
       }
+    },
+    "updates": {
+      "enabled": true,
+      "url": "https://u.expo.dev/459ceb37-f1b6-4d6d-bf78-2b92c545a328",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 30000,
+      "requestHeaders": {
+        "expo-channel-name": "production"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }
