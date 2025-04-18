@@ -8,7 +8,7 @@ import {
   normalizeDataForDashboard,
   processDataForDashboard,
 } from "@/src/storage/dataService";
-import { CaffeineData, DailyData, TimeData } from "@/src/types";
+import { DailyData } from "@/src/types";
 import { useFocusEffect } from "@react-navigation/native";
 
 // Custom animated header component for the dashboard

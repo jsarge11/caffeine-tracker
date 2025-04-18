@@ -160,7 +160,7 @@ const SleepInput: React.FC<SleepInputProps> = ({
 
   // Calculate and format the duration
   const calculateDuration = (): string => {
-    if (!startHour || !startMinute || !endHour || !endMinute) {
+    if (!isDisabled) {
       return "Select times";
     }
 

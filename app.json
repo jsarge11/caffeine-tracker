@@ -15,8 +15,11 @@
       "infoPlist": {
         "UIBackgroundModes": [
           "fetch",
+          "remote-notification",
+          "fetch",
           "remote-notification"
-        ]
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -46,6 +49,11 @@
     "description": "Track your caffeine intake and sleep patterns",
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "459ceb37-f1b6-4d6d-bf78-2b92c545a328"
+      }
     }
   }
 }
